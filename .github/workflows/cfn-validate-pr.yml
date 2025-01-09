@@ -1,6 +1,9 @@
 name: Validate CloudFormation on PR
 
 on:
+  push:
+    paths:
+      - 'cloudformation/**'
   pull_request:
     paths:
       - 'cloudformation/**'
@@ -45,7 +48,7 @@ jobs:
 
   cleanup-on-merge:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
