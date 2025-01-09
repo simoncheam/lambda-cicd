@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'lambda/'
+      - 'lambda/**'
 
 jobs:
   deploy-lambda: # Job name
