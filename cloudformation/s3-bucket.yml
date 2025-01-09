@@ -19,7 +19,7 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
         - Key: Environment
-          Value: GithubActions-Validation
+          Value: GithubActions-Cleanup-Validation
 
 Outputs:
   BucketName:
