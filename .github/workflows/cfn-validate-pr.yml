@@ -6,9 +6,9 @@ on:
       - 'cloudformation/**'
     types:
       - opened # Trigger when a new PR is created
-      - synchronize # Trigger when the PR is updated
-      - reopened # Trigger when a closed PR is reopened
-      - closed # Trigger when the PR is closed (for cleanup only)
+      # - synchronize # Trigger when the PR is updated
+      # - reopened # Trigger when a closed PR is reopened
+      # - closed # Trigger when the PR is closed (for cleanup only)
 
 permissions:
   pull-requests: write
@@ -16,7 +16,6 @@ permissions:
 
 jobs:
   validate-cfn:
-    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
