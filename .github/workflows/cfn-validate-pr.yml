@@ -14,8 +14,10 @@ permissions:
   pull-requests: write
   contents: read
 
+# Skip deployment if the PR is closed
 jobs:
   validate-cfn:
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
