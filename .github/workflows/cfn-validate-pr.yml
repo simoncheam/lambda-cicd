@@ -28,7 +28,7 @@ jobs:
 
       - name: Deploy our stack
         run: |
-          stack_name="pre-test-stack-${{ github.event.pull_request.number }}"
+          stack_name="pr-test-stack-${{ github.event.pull_request.number }}"
           aws cloudformation create-stack --stack-name $stack_name --template-body file://cloudformation/s3-bucket.yml --parameters ParameterKey=Environment,ParameterValue=test
 
       - name: Comment on PR
@@ -41,6 +41,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: 'CloudFormation test stack deployed. Stack name: pr-test-stack-${{ github.event.pull_request.number }}'
+            })
 
   cleanup-on-merge:
     runs-on: ubuntu-latest
