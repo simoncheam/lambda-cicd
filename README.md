@@ -1,63 +1,83 @@
-# Advanced GitHub Actions: Automating CloudFormation Validation with GitHub Actions
+# **GitHub Actions CI/CD for Lambda Functions and CloudFormation Validation**
 
-<p align="center">
-  <strong>Automate validation and testing of AWS CloudFormation templates using GitHub Actions pull request events.</strong>
-</p>
+This repository contains two GitHub Actions workflows to automate the deployment and validation of AWS infrastructure:
 
-<a id="readme-top"></a>
+1. **Automatically Deploying Lambda Functions**
+2. **Automating CloudFormation Validation for Pull Requests**
 
-<!-- TABLE OF CONTENTS -->
+Both workflows are designed to enhance DevOps practices by ensuring that infrastructure changes are consistently deployed and validated before merging.
 
-## Table of Contents
+---
+
+## **Table of Contents**
 
 1. [About The Project](#about-the-project)
-   - [Built With](#built-with)
-2. [Getting Started](#getting-started)
+   - [Part 1: Automatically Deploying Lambda Functions](#part-1-automatically-deploying-lambda-functions)
+   - [Part 2: Automating CloudFormation Validation](#part-2-automating-cloudformation-validation)
+2. [Built With](#built-with)
+3. [Getting Started](#getting-started)
    - [Prerequisites](#prerequisites)
    - [Installation](#installation)
-3. [Usage](#usage)
-4. [Roadmap](#roadmap)
+4. [Usage](#usage)
 5. [Contributing](#contributing)
 6. [License](#license)
 7. [Contact](#contact)
 
 ---
 
-## About The Project
+## **About The Project**
 
-This project provides a complete CI/CD pipeline for validating and deploying AWS CloudFormation stacks using GitHub Actions. When a pull request (PR) is created or updated, the workflow validates the CloudFormation template and deploys a test stack. After merging the PR, the workflow automatically deletes the test stack, ensuring a clean environment and minimal AWS costs.
+This repository features two distinct GitHub Actions workflows:
 
-### Key Features:
+### **Part 1: Automatically Deploying Lambda Functions**
 
-- **Trigger on PR Events:** The workflow handles multiple PR events (`opened`, `updated`, `reopened`, and `closed`).
-- **Automated Cleanup:** Deletes the test CloudFormation stack after merging to keep environments clean.
-- **Supports Multiple Environments:** The CloudFormation template supports different environments like `test`, `staging`, and `production`.
+This workflow triggers on **push events** to the main branch. When changes are detected in the `lambda/` directory, it automatically deploys the updated Lambda function to AWS. This ensures that any code changes to the Lambda function are consistently deployed without manual intervention.
+
+Key features:
+
+- **Automated deployments** on code push to the main branch.
+- **AWS credentials management** via GitHub Secrets.
+- **Error handling** to prevent further steps if deployment fails.
+
+### **Part 2: Automating CloudFormation Validation**
+
+This workflow triggers on **pull request events** and handles the following tasks:
+
+- Validates CloudFormation templates when a PR is opened or updated.
+- Deploys a test CloudFormation stack to AWS for validation.
+- Comments on the pull request with deployment status and details.
+- Cleans up (deletes) the test stack when the PR is merged.
+
+Key features:
+
+- Ensures infrastructure changes are validated before merging.
+- Automatically removes test stacks after merging.
+- Supports multiple PR event types, including `opened`, `updated`, `reopened`, and `closed`.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
-### Built With
+## **Built With**
 
 This project uses the following tools and frameworks:
 
 - ![GitHub Actions](https://img.shields.io/badge/-GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
+- ![AWS Lambda](https://img.shields.io/badge/-AWS_Lambda-F09000?style=for-the-badge&logo=amazon-aws&logoColor=white)
 - ![AWS CloudFormation](https://img.shields.io/badge/-AWS_CloudFormation-F09000?style=for-the-badge&logo=amazon-aws&logoColor=white)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
-## Getting Started
+## **Getting Started**
 
-To set up this project locally and run the GitHub Actions workflow, follow these simple steps.
-
-### Prerequisites
+### **Prerequisites**
 
 You need the following tools installed:
 
 1. **AWS CLI**
-   Install the AWS Command Line Interface (CLI) by following the [AWS CLI Installation Guide](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html).
+   Install the AWS Command Line Interface by following the [AWS CLI Installation Guide](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html).
 
 2. **GitHub CLI (optional)**
    Install GitHub CLI if you want to manage PRs from the command line:
@@ -71,7 +91,7 @@ You need the following tools installed:
 
 ---
 
-### Installation
+### **Installation**
 
 1. **Clone the Repository:**
 
@@ -102,39 +122,129 @@ You need the following tools installed:
 
 ---
 
-## Usage
+## **Usage**
 
-1. **Opening a PR:**
-   When you open a pull request, the workflow automatically validates your CloudFormation template and deploys a test stack.
+### **Part 1: Automatically Deploying Lambda Functions**
 
-2. **Merging a PR:**
-   After merging the PR, the workflow deletes the test stack, keeping your environment clean.
+1. **Set Up AWS Credentials**
+   Add AWS credentials as GitHub Secrets to securely authenticate deployments:
 
-3. **Supported PR Events:**
-   The workflow triggers on the following PR events:
-   - `opened`
-   - `synchronize` (PR updated)
-   - `reopened`
-   - `closed` (for cleanup)
+   - `AWS_ACCESS_KEY_ID`
+   - `AWS_SECRET_ACCESS_KEY`
 
-_For more information, refer to the [Documentation](#)._
+2. **Create a Push Workflow**
+   Add the following workflow file in `.github/workflows/lambda.yml`:
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+   ```yaml
+   name: Deploy AWS Lambda
+
+   on:
+     push:
+       branches:
+         - main
+       paths:
+         - 'lambda/**'
+
+   jobs:
+     deploy-lambda:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v2
+
+         - name: Set Up Python
+           uses: actions/setup-python@v2
+           with:
+             python-version: '3.11'
+
+         - name: Install Dependencies
+           run: |
+             python -m pip install --upgrade pip
+             pip install -r lambda/requirements.txt -t lambda/
+
+         - name: Configure AWS Creds
+           uses: aws-actions/configure-aws-credentials@v2
+           with:
+             aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+             aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+             aws-region: us-east-1
+
+         - name: Deploy Lambda Function
+           run: |
+             cd lambda/
+             zip -r lambda.zip .
+             aws lambda update-function-code --function-name my-test-cicd-lambda --zip-file fileb://lambda.zip
+   ```
+
+3. **Trigger the Workflow**
+   Push changes to the `lambda/` directory on the `main` branch. The workflow will automatically deploy the updated Lambda function.
+
+4. **Verify the Deployment**
+   Check the AWS Lambda Console to verify that the function was updated.
 
 ---
 
-## Roadmap
+### **Part 2: Automating CloudFormation Validation**
 
-- [x] Add automated stack validation
-- [x] Implement cleanup after merge
-- [ ] Add unit tests for the CloudFormation template
-- [ ] Support multi-region deployments
+1. **Create a CloudFormation Template**
+   Add the following CloudFormation template in `cloudformation/s3-bucket.yml`:
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+   ```yaml
+   AWSTemplateFormatVersion: '2010-09-09'
+   Description: 'S3 Bucket for our CICD PR'
+
+   Parameters:
+     Environment:
+       Type: String
+       Default: test
+       AllowedValues:
+         - test
+         - staging
+         - production
+
+   Resources:
+     MyS3Bucket:
+       Type: AWS::S3::Bucket
+       Properties:
+         BucketName: !Sub '${AWS::StackName}-${Environment}-bucket-v2'
+         Tags:
+           - Key: Environment
+             Value: !Ref Environment
+           - Key: Environment
+             Value: GithubActions-CFN-Validation-Logic
+   ```
+
+2. **Create a PR Workflow**
+   Add the following workflow file in `.github/workflows/cfn-validate-pr.yml`:
+
+   ```yaml
+   name: Validate CloudFormation on PR
+
+   on:
+     pull_request:
+       paths:
+         - 'cloudformation/**'
+
+   jobs:
+     validate-cfn:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v2
+
+         - name: Configure AWS credentials
+           uses: aws-actions/configure-aws-credentials@v1
+           with:
+             aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+             aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+             aws-region: us-east-1
+
+         - name: Validate CloudFormation template
+           run: |
+             aws cloudformation validate-template --template-body file://cloudformation/s3-bucket.yml
+   ```
 
 ---
 
-## Contributing
+## **Contributing**
 
 Contributions are welcome! Follow these steps to contribute:
 
@@ -144,21 +254,15 @@ Contributions are welcome! Follow these steps to contribute:
 4. Push to your branch (`git push origin feature/new-feature`)
 5. Open a pull request
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 ---
 
-## License
+## **License**
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 ---
 
-## Contact
+## **Contact**
 
 Simon Cheam – [LinkedIn](https://www.linkedin.com/in/simoncheam)
 Project Link: [https://github.com/simoncheam/lambda-cicd](https://github.com/simoncheam/lambda-cicd)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
