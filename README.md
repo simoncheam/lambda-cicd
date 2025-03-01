@@ -1,11 +1,32 @@
 # **GitHub Actions CI/CD for Lambda Functions and CloudFormation Validation**
 
-This repository contains two GitHub Actions workflows to automate the deployment and validation of AWS infrastructure:
+This project demonstrates a serverless CI/CD pipeline using GitHub Actions to automate AWS Lambda deployments and validate CloudFormation templates.
 
 1. **Automatically Deploying Lambda Functions**
 2. **Automating CloudFormation Validation for Pull Requests**
 
 Both workflows are designed to enhance DevOps practices by ensuring that infrastructure changes are consistently deployed and validated before merging.
+
+## **Workflow Architecture**
+
+1. **Lambda Deployment Pipeline:**
+
+   - Triggers on pushes to main branch when lambda code changes
+   - Packages code into zip file
+   - Updates existing Lambda function via AWS CLI
+
+2. **CloudFormation Validation Pipeline:**
+   - Triggers on PR events involving CloudFormation templates
+   - Creates temporary test stacks
+   - Comments on PR with results
+   - Automatically cleans up test resources
+
+## **Business Value**
+
+- Reduces deployment errors with automated validation
+- Speeds up development cycle with automatic deployments
+- Improves code quality through infrastructure testing before merge
+- Eliminates manual AWS console work
 
 ---
 
